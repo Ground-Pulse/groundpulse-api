@@ -1,74 +1,90 @@
+### 2. `groundpulse-api`
 
+```markdown
+# GroundPulse Backend API & Workers (`groundpulse-api`)
 
-  `groundpulse-api`
-
-```
-# groundpulse-api
-
-Core backend REST API, WebSocket gateway, and background worker service for GroundPulse[cite: 1].
+Core NestJS API backend, PostgreSQL database access layer via Prisma, BullMQ asynchronous workers, and Socket.IO real-time gateway for GroundPulse.
 
 ---
 
-## 🎯 Purpose of This Repo
-This repository contains the complete NestJS backend that drives authentication, role-based authorization (RBAC), data persistence, real-time push events, and asynchronous job processing for GroundPulse[cite: 1].
+## 📌 Work of This Repo
+This repository powers the entire business logic and server-side processing for the GroundPulse platform:
+- Implements modular NestJS services: Property, Inspection, Issue/Repair, Provider, Notification, and Admin.
+- Enforces role-based access control (RBAC) via CASL policies and NestJS guards.
+- Manages the PostgreSQL database via Prisma ORM schemas and versioned migrations.
+- Processes background jobs asynchronously via Redis and BullMQ (PDF report compilation within 48h SLA, notification fan-out).
+- Emits real-time WebSocket events via Socket.IO scoped to authenticated user rooms (`user:{userId}`).
+- Generates pre-signed AWS S3 / Cloudflare R2 upload URLs for inspection photo/video media.
 
 ## ❓ Why We Created This Repo
-GroundPulse requires a single, unified backend to enforce critical platform constraints:
-- **Relational Integrity & Transactions:** Coordinates multi-step transactional operations across 10 interrelated database tables (such as approving an issue, generating a repair record, and alerting service providers atomically via `prisma.$transaction`)[cite: 1].
-- **Server-Side RBAC:** Enforces permissions via CASL and NestJS guards so clients can never bypass security checks[cite: 1].
-- **Asynchronous Processing:** Hosts Redis-backed BullMQ workers that generate media-rich inspection reports and fan out notifications without blocking the HTTP request path[cite: 1].
-- **Real-Time Push:** Dispatches state changes to authenticated WebSocket rooms (`user:{userId}`) via Socket.IO[cite: 1].
+GroundPulse requires ACID transactional guarantees (such as issue approval -> repair generation -> audit log write), server-side CASL authorization, and central relational data persistence. Keeping all NestJS backend services and workers in this single repository prevents distributed transaction failures and maintains direct database integrity across all 10 platform entities.
 
-## 📂 File Structure
+## 🛠 Tech Stack
+- **Framework:** NestJS 10
+- **Runtime:** Node.js 20 LTS / TypeScript 5.4+
+- **Database ORM:** Prisma ORM / PostgreSQL 15+
+- **Cache & Queues:** Redis 7+ / BullMQ
+- **Real-Time:** Socket.IO
+- **Security & Auth:** Passport.js, JWT, CASL
+- **Storage SDK:** AWS SDK v3 (S3 pre-signed URLs)
+- **Testing:** Jest, Supertest
+
+## 📁 File Structure
 ```text
 groundpulse-api/
 ├── prisma/
-│   ├── migrations/                    # Managed Prisma database migrations
-│   └── schema.prisma                  # 10 core domain models
+│   ├── schema.prisma
+│   ├── seed.ts
+│   └── migrations/
 ├── src/
 │   ├── modules/
-│   │   ├── auth/                      # Passport.js JWT strategies & CASL ability factory
-│   │   ├── property/                  # Property registration & S3 cover upload
-│   │   ├── inspection/                # Scheduling & checklist state management
-│   │   ├── issue-repair/              # Flagging, approval flow & repair status tracker
-│   │   ├── provider/                  # Service provider verification & matching
-│   │   ├── notification/              # Notification dispatcher & Socket.IO gateway
-│   │   └── admin/                     # Platform-wide live metrics aggregation
-│   ├── jobs/                          # BullMQ background workers
+│   │   ├── admin/
+│   │   ├── auth/
+│   │   ├── inspection/
+│   │   ├── issue-repair/
+│   │   ├── notification/
+│   │   ├── property/
+│   │   └── provider/
+│   ├── jobs/
 │   │   ├── report-generation.processor.ts
 │   │   └── notification-dispatch.processor.ts
-│   ├── filters/
-│   │   └── global-exception.filter.ts # Unified error-handling contract
-│   ├── lib/
-│   │   └── prisma.service.ts          # Central Prisma connection client
+│   ├── gateways/
+│   │   └── notification.gateway.ts
+│   ├── common/
+│   │   ├── filters/
+│   │   ├── guards/
+│   │   └── interceptors/
 │   ├── app.module.ts
-│   └── main.ts                        # Application bootstrap & CORS configuration
-├── test/                              # Jest unit & Supertest integration suites
-├── Dockerfile                         # Production multi-stage container build
+│   └── main.ts
+├── test/
+│   ├── unit/
+│   └── integration/
+├── Dockerfile
 ├── package.json
 ├── tsconfig.json
 └── README.md
 💻 Commands
 Bash
-# 1. Install dependencies
+# Install dependencies
 npm install
 
-# 2. Configure environment variables
-cp .env.example .env
-
-# 3. Run database migrations and generate Prisma Client
+# Run database migrations locally
 npx prisma migrate dev
+
+# Seed database with initial roles & data
 npx prisma db seed
 
-# 4. Start local development server (with hot reload)
+# Open visual Prisma database studio
+npx prisma studio
+
+# Start backend in development mode (hot-reload)
 npm run start:dev
 
-# 5. Run unit and integration tests
+# Run unit tests
 npm test
-npm run test:integration
 
-# 6. Open visual database browser
-npx prisma studio
+# Run integration tests against test DB
+npm run test:integration
 🔑 Required Environment Variables
 Code snippet
 PORT=3001
