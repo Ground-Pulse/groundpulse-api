@@ -3,7 +3,8 @@
 ```markdown
 # GroundPulse Backend API & Workers (`groundpulse-api`)
 
-Core NestJS API backend, PostgreSQL database access layer via Prisma, BullMQ asynchronous workers, and Socket.IO real-time gateway for GroundPulse.
+Core NestJS API backend, PostgreSQL database access layer via Prisma,
+BullMQ asynchronous workers, and Socket.IO real-time gateway for GroundPulse.
 
 ---
 
@@ -17,7 +18,10 @@ This repository powers the entire business logic and server-side processing for 
 - Generates pre-signed AWS S3 / Cloudflare R2 upload URLs for inspection photo/video media.
 
 ## ❓ Why We Created This Repo
-GroundPulse requires ACID transactional guarantees (such as issue approval -> repair generation -> audit log write), server-side CASL authorization, and central relational data persistence. Keeping all NestJS backend services and workers in this single repository prevents distributed transaction failures and maintains direct database integrity across all 10 platform entities.
+GroundPulse requires ACID transactional guarantees (such as issue approval -> repair generation -> audit log write),
+server-side CASL authorization, and central relational data persistence. 
+Keeping all NestJS backend services and workers in this single repository prevents distributed transaction
+failures and maintains direct database integrity across all 10 platform entities.
 
 ## 🛠 Tech Stack
 - **Framework:** NestJS 10
