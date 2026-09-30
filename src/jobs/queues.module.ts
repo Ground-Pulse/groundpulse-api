@@ -32,6 +32,9 @@ import { ReportGenerationProcessor } from './report-generation.processor';
                 port: Number(parsed.port) || 6379,
                 username: parsed.username || undefined,
                 password: parsed.password || undefined,
+                maxRetriesPerRequest: null,
+                enableReadyCheck: false,
+                lazyConnect: true,
               },
             };
           } catch {
@@ -43,6 +46,9 @@ import { ReportGenerationProcessor } from './report-generation.processor';
             host: configService.get<string>('REDIS_HOST') || process.env.REDIS_HOST || 'localhost',
             port: Number(configService.get<string>('REDIS_PORT')) || Number(process.env.REDIS_PORT) || 6379,
             password: configService.get<string>('REDIS_PASSWORD') || process.env.REDIS_PASSWORD || undefined,
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+            lazyConnect: true,
           },
         };
       },
