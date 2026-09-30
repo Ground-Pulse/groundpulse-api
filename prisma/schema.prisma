@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  OWNER
+  INSPECTOR
+  ADMIN
+  PROVIDER
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+}
+
+model User {
+  id                  String       @id @default(uuid())
+  name                String
+  email               String       @unique
+  passwordHash        String       @map("password_hash")
+  role                Role         @default(OWNER)
+  phone               String?
+  createdAt           DateTime     @default(now()) @map("created_at")
+
+  properties          Property[]
+  assignedInspections Inspection[] @relation("AssignedInspector")
+
+  @@map("users")
+}
+
+model Property {
+  id            String       @id @default(uuid())
+  ownerId       String       @map("owner_id")
+  address       String
+  type          String
+  coverPhotoUrl String       @map("cover_photo_url")
+  healthScore   Decimal?     @map("health_score") @db.Decimal(5, 2)
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  owner         User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  inspections   Inspection[]
+
+  @@map("properties")
+}
+
+model Inspection {
+  id             String           @id @default(uuid())
+  propertyId     String           @map("property_id")
+  inspectorId    String?          @map("inspector_id")
+  scheduledDate  DateTime         @map("scheduled_date")
+  recurrenceRule String?          @map("recurrence_rule")
+  status         InspectionStatus @default(SCHEDULED)
+  startedAt      DateTime?        @map("started_at")
+  submittedAt    DateTime?        @map("submitted_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  property       Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  inspector      User?            @relation("AssignedInspector", fields: [inspectorId], references: [id])
+
+  @@map("inspections")
+}
