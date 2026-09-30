@@ -2,10 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { PoliciesGuard } from '../../common/guards/policies.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { CaslAbilityFactory } from './casl-ability.factory';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -19,7 +17,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         secret:
           configService.get<string>('JWT_SECRET') ||
           process.env.JWT_SECRET ||
-          'groundpulse_default_jwt_secret',
+          'groundpulse_super_secret_jwt_key_development_2026',
         signOptions: {
           expiresIn:
             configService.get<string>('JWT_EXPIRES_IN') ||
@@ -34,15 +32,11 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     AuthService,
     JwtStrategy,
     JwtAuthGuard,
-    CaslAbilityFactory,
-    PoliciesGuard,
   ],
   exports: [
     AuthService,
     JwtStrategy,
     JwtAuthGuard,
-    CaslAbilityFactory,
-    PoliciesGuard,
     JwtModule,
     PassportModule,
   ],

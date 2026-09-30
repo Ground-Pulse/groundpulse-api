@@ -10,8 +10,8 @@ generator client {
 enum Role {
   OWNER
   INSPECTOR
-  ADMIN
   PROVIDER
+  ADMIN
 }
 
 enum InspectionStatus {
@@ -21,17 +21,29 @@ enum InspectionStatus {
   COMPLETED
 }
 
+enum IssueStatus {
+  REPORTED
+  APPROVED
+  IN_REPAIR
+  RESOLVED
+  REJECTED
+}
+
 model User {
-  id                  String       @id @default(uuid())
+  id                  String         @id @default(uuid())
   name                String
-  email               String       @unique
-  passwordHash        String       @map("password_hash")
-  role                Role         @default(OWNER)
+  email               String         @unique
+  passwordHash        String         @map("password_hash")
+  role                Role           @default(OWNER)
   phone               String?
-  createdAt           DateTime     @default(now()) @map("created_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @default(now()) @updatedAt @map("updated_at")
 
   properties          Property[]
-  assignedInspections Inspection[] @relation("AssignedInspector")
+  assignedInspections Inspection[]   @relation("AssignedInspector")
+  assignedRepairs     Repair[]       @relation("AssignedProvider")
+  notifications       Notification[]
+  auditLogs           AuditLog[]
 
   @@map("users")
 }
@@ -44,10 +56,13 @@ model Property {
   coverPhotoUrl String       @map("cover_photo_url")
   healthScore   Decimal?     @map("health_score") @db.Decimal(5, 2)
   createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at")
 
   owner         User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   inspections   Inspection[]
+  issues        Issue[]
 
+  @@index([ownerId])
   @@map("properties")
 }
 
@@ -58,12 +73,87 @@ model Inspection {
   scheduledDate  DateTime         @map("scheduled_date")
   recurrenceRule String?          @map("recurrence_rule")
   status         InspectionStatus @default(SCHEDULED)
+  reportUrl      String?          @map("report_url")
   startedAt      DateTime?        @map("started_at")
   submittedAt    DateTime?        @map("submitted_at")
   createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @default(now()) @updatedAt @map("updated_at")
 
   property       Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   inspector      User?            @relation("AssignedInspector", fields: [inspectorId], references: [id])
+  issues         Issue[]
 
+  @@index([propertyId])
+  @@index([inspectorId])
   @@map("inspections")
+}
+
+model Issue {
+  id           String      @id @default(uuid())
+  inspectionId String?     @map("inspection_id")
+  propertyId   String      @map("property_id")
+  title        String
+  description  String
+  severity     String      @default("MEDIUM")
+  status       IssueStatus @default(REPORTED)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at")
+
+  inspection   Inspection? @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
+  property     Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  repairs      Repair[]
+
+  @@index([propertyId])
+  @@index([inspectionId])
+  @@map("issues")
+}
+
+model Repair {
+  id            String    @id @default(uuid())
+  issueId       String    @map("issue_id")
+  providerId    String?   @map("provider_id")
+  cost          Decimal?  @db.Decimal(10, 2)
+  status        String    @default("SCHEDULED")
+  scheduledDate DateTime? @map("scheduled_date")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  issue         Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  provider      User?     @relation("AssignedProvider", fields: [providerId], references: [id])
+
+  @@index([issueId])
+  @@index([providerId])
+  @@map("repairs")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  details   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@map("audit_logs")
 }

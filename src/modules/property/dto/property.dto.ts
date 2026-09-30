@@ -23,3 +23,21 @@ export class CreatePropertyDto {
   @IsOptional()
   healthScore?: number;
 }
+
+export class UpdatePropertyDto {
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+
+  @IsUrl({}, { message: 'Cover photo URL must be a valid URL' })
+  @IsOptional()
+  coverPhotoUrl?: string;
+
+  @IsNumber({}, { message: 'Health score must be a number' })
+  @IsOptional()
+  healthScore?: number;
+}

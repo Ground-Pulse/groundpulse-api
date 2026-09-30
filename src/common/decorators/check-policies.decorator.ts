@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { AppAbility } from '../../modules/auth/casl-ability.factory';
+import { AppAbility } from '../../modules/casl/casl-ability.factory';
 
 export interface IPolicyHandler {
   handle(ability: AppAbility): boolean;

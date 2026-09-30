@@ -5,7 +5,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AppAbility, CaslAbilityFactory } from '../../modules/auth/casl-ability.factory';
+import {
+  AppAbility,
+  CaslAbilityFactory,
+} from '../../modules/casl/casl-ability.factory';
 import {
   CHECK_POLICIES_KEY,
   PolicyHandler,

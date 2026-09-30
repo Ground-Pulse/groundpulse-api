@@ -2,13 +2,7 @@ import { AbilityBuilder, createMongoAbility, MongoAbility } from '@casl/ability'
 import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
-export type Action =
-  | 'manage'
-  | 'create'
-  | 'read'
-  | 'update'
-  | 'delete'
-  | 'approve';
+export type Action = 'manage' | 'create' | 'read' | 'update' | 'delete';
 
 export type Subjects =
   | 'Property'
@@ -16,6 +10,8 @@ export type Subjects =
   | 'Issue'
   | 'Repair'
   | 'User'
+  | 'Notification'
+  | 'AuditLog'
   | 'all';
 
 export type AppAbility = MongoAbility<[Action, Subjects]>;
@@ -33,32 +29,39 @@ export class CaslAbilityFactory {
 
     switch (user.role) {
       case Role.ADMIN:
-        // ADMIN can manage all entities
         can('manage', 'all');
         break;
 
       case Role.OWNER:
-        // OWNER can create/read their own Properties, read Inspections, and approve Issues
         can('create', 'Property');
         can('read', 'Property');
+        can('update', 'Property');
+        can('delete', 'Property');
         can('read', 'Inspection');
-        can('approve', 'Issue');
+        can('read', 'Issue');
+        can('update', 'Issue'); // for approving/rejecting issues
+        can('read', 'Repair');
+        can('read', 'Notification');
         can('read', 'User');
         break;
 
       case Role.INSPECTOR:
-        // INSPECTOR can read/update assigned Inspections and create Issues
+        can('read', 'Property');
         can('read', 'Inspection');
         can('update', 'Inspection');
         can('create', 'Issue');
-        can('read', 'Property');
+        can('read', 'Issue');
+        can('read', 'Notification');
+        can('read', 'User');
         break;
 
       case Role.PROVIDER:
-        // PROVIDER can read/update assigned Repairs
+        can('read', 'Property');
+        can('read', 'Issue');
         can('read', 'Repair');
         can('update', 'Repair');
-        can('read', 'Issue');
+        can('read', 'Notification');
+        can('read', 'User');
         break;
 
       default:
